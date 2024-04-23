@@ -1,0 +1,9 @@
+postgres:
+  user: "user"
+  password: "user"
+  host: "localhost"
+  port: 5440
+  database: "chat_db"
+
+server:
+  port: 8080
