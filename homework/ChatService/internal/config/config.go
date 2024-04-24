@@ -9,6 +9,7 @@ import (
 type ServerConfig struct {
 	Postgres PostgresConfig   `yaml:"postgres"`
 	Server   ServerInfoConfig `yaml:"server"`
+	Redis    RedisConfig      `yaml:"redis"`
 }
 
 type PostgresConfig struct {
@@ -26,6 +27,13 @@ type ServerInfoConfig struct {
 type ClientConfig struct {
 	Host string `yaml:"host"`
 	Port int    `yaml:"port"`
+}
+
+type RedisConfig struct {
+	Host     string `yaml:"host"`
+	Port     int    `yaml:"port"`
+	Password string `yaml:"password"`
+	DB       int    `yaml:"db"`
 }
 
 func ParseServerConfig(path string) (*ServerConfig, error) {

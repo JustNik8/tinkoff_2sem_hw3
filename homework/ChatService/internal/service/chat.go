@@ -3,31 +3,24 @@ package service
 import (
 	"context"
 
-	"github.com/google/uuid"
 	"hw3/chat-service/internal/domain"
-	"hw3/chat-service/internal/repo"
+	"hw3/chat-service/internal/repo/redis"
 )
 
 type ChatService interface {
-	GetLastMessages(ctx context.Context, count int) ([]domain.MessageInfo, error)
-	InsertMessage(ctx context.Context, messageInfo domain.MessageInfo) (domain.MessageInfo, error)
+	GetLastMessages(ctx context.Context, count int64) ([]domain.MessageInfo, error)
 }
 
 type chatService struct {
-	repo repo.ChatRepo
+	storageCache *redis.StorageCache
 }
 
-func NewChatService(repo repo.ChatRepo) ChatService {
-	return &chatService{repo: repo}
+func NewChatService(storageCache *redis.StorageCache) ChatService {
+	return &chatService{
+		storageCache: storageCache,
+	}
 }
 
-func (s *chatService) GetLastMessages(ctx context.Context, count int) ([]domain.MessageInfo, error) {
-	return s.repo.GetLastMessages(ctx, count)
-}
-
-func (s *chatService) InsertMessage(ctx context.Context, messageInfo domain.MessageInfo) (domain.MessageInfo, error) {
-	id := uuid.New()
-	messageInfo.ID = id.String()
-
-	return s.repo.InsertMessage(ctx, messageInfo)
+func (s *chatService) GetLastMessages(ctx context.Context, count int64) ([]domain.MessageInfo, error) {
+	return s.storageCache.GetLastMessages(ctx, count)
 }

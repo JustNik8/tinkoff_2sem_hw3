@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/websocket"
@@ -53,7 +52,7 @@ func (h *ChatHandler) Chat(w http.ResponseWriter, r *http.Request) {
 	h.clients[connection] = struct{}{}
 	defer delete(h.clients, connection)
 
-	//h.sendLastMessages(connection, lastMessagesCnt)
+	h.sendLastMessages(connection, lastMessagesCnt)
 
 	for {
 		mt, message, err := connection.ReadMessage()
@@ -94,16 +93,16 @@ func printMessage(message string) {
 	fmt.Println(message)
 }
 
-func (h *ChatHandler) sendLastMessages(conn *websocket.Conn, count int) {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
+func (h *ChatHandler) sendLastMessages(conn *websocket.Conn, count int64) {
+	ctx := context.Background()
 
 	lastMessages, err := h.chatService.GetLastMessages(ctx, count)
 	if err != nil {
-		h.messageToClient(conn, []byte("Error while getting last 10 messages"))
-		log.Println(err)
+		h.messageToClient(conn, []byte(""))
+		log.Fatal(err)
 		return
 	}
+	log.Println(lastMessages)
 
 	responseMessages := h.messageConverter.MapSliceDomainToResponse(lastMessages)
 	messagesJson, err := json.Marshal(responseMessages)

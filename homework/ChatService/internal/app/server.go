@@ -15,7 +15,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"hw3/chat-service/internal/config"
 	"hw3/chat-service/internal/converter"
-	"hw3/chat-service/internal/repo"
+	"hw3/chat-service/internal/repo/redis"
 	"hw3/chat-service/internal/service"
 	"hw3/chat-service/internal/transport/kafka"
 	"hw3/chat-service/internal/transport/rest"
@@ -46,8 +46,9 @@ func RunServer() {
 	defer pool.Close()
 
 	mux := http.NewServeMux()
-	chatRepo := repo.NewRepo(pool)
-	chatService := service.NewChatService(chatRepo)
+	storageCache := redis.NewStorageCache(cfg.Redis)
+
+	chatService := service.NewChatService(storageCache)
 	messageConverter := converter.MessageConverter{}
 
 	addrs := []string{"kafka1:9092"}
