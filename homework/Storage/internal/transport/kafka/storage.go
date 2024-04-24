@@ -1,4 +1,4 @@
-package transport
+package kafka
 
 import (
 	"context"
@@ -12,30 +12,35 @@ import (
 	"hw3/storage/internal/transport/dto"
 )
 
-type StorageKafka struct {
+type StorageHandler struct {
 	consumer         sarama.Consumer
 	storageService   service.StorageService
 	messageConverter converter.MessageConverter
 }
 
-func NewStorageKafka(addrs []string, storageService service.StorageService, messageConverter converter.MessageConverter) (*StorageKafka, error) {
+func NewStorageHandler(
+	addrs []string,
+	storageService service.StorageService,
+	messageConverter converter.MessageConverter,
+) (*StorageHandler, error) {
 	consumer, err := sarama.NewConsumer(addrs, nil)
 	if err != nil {
 		log.Fatalf("Failed to create consumer: %v", err)
 	}
 
-	return &StorageKafka{
+	return &StorageHandler{
 		consumer:         consumer,
 		storageService:   storageService,
 		messageConverter: messageConverter,
 	}, nil
 }
 
-func (s *StorageKafka) ConsumeMessages(topic string) error {
+func (s *StorageHandler) ConsumeMessages(topic string) error {
 	partConsumer, err := s.consumer.ConsumePartition(topic, 0, sarama.OffsetNewest)
 	if err != nil {
-		log.Fatalf("Failed to consume partition: %v", err)
+		return fmt.Errorf("failed to consume partition: %v", err)
 	}
+
 	defer partConsumer.Close()
 
 	for {
@@ -45,8 +50,7 @@ func (s *StorageKafka) ConsumeMessages(topic string) error {
 				return fmt.Errorf("channel closed")
 			}
 
-			// Десериализация входящего сообщения из JSON
-			var messageDTO dto.MessageInfoDTO
+			var messageDTO dto.MessageInfoRequest
 			err := json.Unmarshal(msg.Value, &messageDTO)
 
 			if err != nil {

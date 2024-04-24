@@ -2,6 +2,8 @@ package config
 
 import (
 	"os"
+
+	"gopkg.in/yaml.v3"
 )
 
 type ServerConfig struct {

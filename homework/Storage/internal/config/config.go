@@ -9,6 +9,7 @@ import (
 type ServerConfig struct {
 	Postgres PostgresConfig   `yaml:"postgres"`
 	Server   ServerInfoConfig `yaml:"server"`
+	Kafka    KafkaConfig      `yaml:"kafka"`
 }
 
 type PostgresConfig struct {
@@ -23,9 +24,9 @@ type ServerInfoConfig struct {
 	Port int `yaml:"port"`
 }
 
-type ClientConfig struct {
-	Host string `yaml:"host"`
-	Port int    `yaml:"port"`
+type KafkaConfig struct {
+	Addrs []string `yaml:"addrs"`
+	Topic string   `yaml:"topic"`
 }
 
 func ParseServerConfig(path string) (*ServerConfig, error) {
@@ -35,18 +36,6 @@ func ParseServerConfig(path string) (*ServerConfig, error) {
 	}
 
 	cfg := &ServerConfig{}
-	err = yaml.NewDecoder(f).Decode(cfg)
-
-	return cfg, err
-}
-
-func ParseClientConfig(path string) (*ClientConfig, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-
-	cfg := &ClientConfig{}
 	err = yaml.NewDecoder(f).Decode(cfg)
 
 	return cfg, err

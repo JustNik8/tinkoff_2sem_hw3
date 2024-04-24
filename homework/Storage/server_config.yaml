@@ -1,9 +1,14 @@
 postgres:
   user: "user"
   password: "user"
-  host: "localhost"
-  port: 5440
+  host: "postgres"
+  port: 5432
   database: "chat_db"
 
 server:
   port: 8080
+
+kafka:
+  addrs:
+    - "kafka1:9092"
+  topic: "chat"

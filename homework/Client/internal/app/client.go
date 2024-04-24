@@ -14,8 +14,8 @@ import (
 	"syscall"
 
 	"github.com/gorilla/websocket"
-	"hw3/chat-service/internal/config"
-	"hw3/chat-service/internal/transport/dto"
+	"hw3/client/config"
+	"hw3/client/internal/transport/dto"
 )
 
 const (
@@ -98,7 +98,7 @@ func readMessages(c *websocket.Conn) {
 		if err != nil || messageType == websocket.CloseMessage {
 			log.Fatal(err)
 		}
-		var messageDTO dto.MessageInfoRequest
+		var messageDTO dto.MessageInfoResponse
 
 		err = json.Unmarshal(messageBytes, &messageDTO)
 		if err != nil {

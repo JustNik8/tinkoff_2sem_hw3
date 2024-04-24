@@ -8,7 +8,7 @@ import (
 type MessageConverter struct {
 }
 
-func (c *MessageConverter) MapDtoToDomain(dto dto.MessageInfoDTO) domain.MessageInfo {
+func (c *MessageConverter) MapDtoToDomain(dto dto.MessageInfoRequest) domain.MessageInfo {
 	return domain.MessageInfo{
 		Nickname: dto.Nickname,
 		Message:  dto.Message,

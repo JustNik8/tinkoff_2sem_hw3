@@ -9,7 +9,6 @@ import (
 )
 
 type StorageRepo interface {
-	GetLastMessages(ctx context.Context, count int) ([]*domain.MessageInfo, error)
 	InsertMessage(ctx context.Context, messageInfo domain.MessageInfo) (domain.MessageInfo, error)
 }
 
@@ -18,7 +17,7 @@ type storageRepo struct {
 	pool *pgxpool.Pool
 }
 
-func NewRepo(pgxPool *pgxpool.Pool) StorageRepo {
+func NewStorageRepo(pgxPool *pgxpool.Pool) StorageRepo {
 	return &storageRepo{
 		Queries: queries.New(pgxPool),
 		pool:    pgxPool,
