@@ -1,4 +1,4 @@
-package transport
+package rest
 
 import (
 	"context"
@@ -8,26 +8,41 @@ import (
 	"net/http"
 	"time"
 
-	"2sem/hw1/homework/internal/domain"
-	"2sem/hw1/homework/internal/service"
-	"2sem/hw1/homework/internal/transport/dto"
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/websocket"
+	"hw3/chat-service/internal/converter"
+	"hw3/chat-service/internal/service"
+	"hw3/chat-service/internal/transport/dto"
+	"hw3/chat-service/internal/transport/kafka"
+)
+
+const (
+	lastMessagesCnt = 10
+	chatTopic       = "chat"
 )
 
 type ChatHandler struct {
-	service  service.ChatService
-	upgrader websocket.Upgrader
-	clients  map[*websocket.Conn]struct{}
-	validate *validator.Validate
+	kafkaHandler     *kafka.ChatHandler
+	chatService      service.ChatService
+	messageConverter converter.MessageConverter
+	upgrader         websocket.Upgrader
+	validate         *validator.Validate
+	clients          map[*websocket.Conn]struct{}
 }
 
-func NewChatHandler(service service.ChatService, upgrader websocket.Upgrader) *ChatHandler {
+func NewChatHandler(
+	service service.ChatService,
+	upgrader websocket.Upgrader,
+	messageConverter converter.MessageConverter,
+	kafkaHandler *kafka.ChatHandler,
+) *ChatHandler {
 	return &ChatHandler{
-		service:  service,
-		upgrader: upgrader,
-		clients:  make(map[*websocket.Conn]struct{}),
-		validate: validator.New(validator.WithRequiredStructEnabled()),
+		kafkaHandler:     kafkaHandler,
+		chatService:      service,
+		messageConverter: messageConverter,
+		upgrader:         upgrader,
+		validate:         validator.New(validator.WithRequiredStructEnabled()),
+		clients:          make(map[*websocket.Conn]struct{}),
 	}
 }
 
@@ -38,7 +53,7 @@ func (h *ChatHandler) Chat(w http.ResponseWriter, r *http.Request) {
 	h.clients[connection] = struct{}{}
 	defer delete(h.clients, connection)
 
-	h.sendLastMessages(connection, 10)
+	//h.sendLastMessages(connection, lastMessagesCnt)
 
 	for {
 		mt, message, err := connection.ReadMessage()
@@ -83,20 +98,15 @@ func (h *ChatHandler) sendLastMessages(conn *websocket.Conn, count int) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
-	lastMessages, err := h.service.GetLastMessages(ctx, count)
+	lastMessages, err := h.chatService.GetLastMessages(ctx, count)
 	if err != nil {
 		h.messageToClient(conn, []byte("Error while getting last 10 messages"))
 		log.Println(err)
 		return
 	}
-	socketMessages := make([]dto.MessageInfoDTO, 0)
 
-	for _, message := range lastMessages {
-		messageDTO := dto.MessageInfoDTO{Nickname: message.Nickname, Message: message.Message, Time: message.Time}
-		socketMessages = append(socketMessages, messageDTO)
-	}
-
-	messagesJson, err := json.Marshal(socketMessages)
+	responseMessages := h.messageConverter.MapSliceDomainToResponse(lastMessages)
+	messagesJson, err := json.Marshal(responseMessages)
 	if err != nil {
 		h.messageToClient(conn, []byte("Error to send message"))
 		log.Println(err)
@@ -105,34 +115,30 @@ func (h *ChatHandler) sendLastMessages(conn *websocket.Conn, count int) {
 	}
 }
 
-func (h *ChatHandler) readMessage(message []byte) (dto.MessageInfoDTO, error) {
-	var info dto.MessageInfoDTO
+func (h *ChatHandler) readMessage(message []byte) (dto.MessageInfoRequest, error) {
+	var info dto.MessageInfoRequest
 	err := json.Unmarshal(message, &info)
 
 	if err != nil {
-		return dto.MessageInfoDTO{}, err
+		return dto.MessageInfoRequest{}, err
 	}
 
 	err = h.validate.Struct(info)
 	if err != nil {
-		return dto.MessageInfoDTO{}, err
+		return dto.MessageInfoRequest{}, err
 	}
 
 	return info, nil
 }
 
-func (h *ChatHandler) handleMessage(infoDTO dto.MessageInfoDTO) {
-	info, err := h.service.InsertMessage(context.Background(), domain.MessageInfo{
-		Nickname: infoDTO.Nickname,
-		Message:  infoDTO.Message,
-	})
+func (h *ChatHandler) handleMessage(infoRequest dto.MessageInfoRequest) {
+	err := h.kafkaHandler.ProduceMessage(chatTopic, infoRequest)
 	if err != nil {
-		log.Println(err)
-		return
+		log.Printf("error while send message to kafka: %v", err)
 	}
 
-	messageDTO := dto.MessageInfoDTO{Nickname: info.Nickname, Message: info.Message, Time: info.Time}
-	messageBytes, err := json.Marshal(messageDTO)
+	resp := h.messageConverter.MapRequestToResponse(infoRequest)
+	messageBytes, err := json.Marshal(resp)
 	if err != nil {
 		log.Println(err)
 		return

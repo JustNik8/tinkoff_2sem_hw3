@@ -13,9 +13,9 @@ import (
 	"strings"
 	"syscall"
 
-	"2sem/hw1/homework/internal/config"
-	"2sem/hw1/homework/internal/transport/dto"
 	"github.com/gorilla/websocket"
+	"hw3/chat-service/internal/config"
+	"hw3/chat-service/internal/transport/dto"
 )
 
 const (
@@ -72,7 +72,7 @@ func writeMessages(c *websocket.Conn, reader *bufio.Reader, nickname string) {
 		message, _ := reader.ReadString('\n')
 		message = strings.TrimSpace(message)
 
-		messageDTO := dto.MessageInfoDTO{Nickname: nickname, Message: message}
+		messageDTO := dto.MessageInfoRequest{Nickname: nickname, Message: message}
 		messageBytes, err := json.Marshal(messageDTO)
 		if err != nil {
 			log.Println(err)
@@ -98,7 +98,7 @@ func readMessages(c *websocket.Conn) {
 		if err != nil || messageType == websocket.CloseMessage {
 			log.Fatal(err)
 		}
-		var messageDTO dto.MessageInfoDTO
+		var messageDTO dto.MessageInfoRequest
 
 		err = json.Unmarshal(messageBytes, &messageDTO)
 		if err != nil {
@@ -115,7 +115,7 @@ func readLastMessages(c *websocket.Conn) error {
 		return err
 	}
 
-	messagesDTO := make([]dto.MessageInfoDTO, 0)
+	messagesDTO := make([]dto.MessageInfoResponse, 0)
 	err = json.Unmarshal(messageBytes, &messagesDTO)
 	if err != nil {
 		return err

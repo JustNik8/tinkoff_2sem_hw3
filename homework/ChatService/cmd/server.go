@@ -1,6 +1,6 @@
 package main
 
-import "2sem/hw1/homework/internal/app"
+import "hw3/chat-service/internal/app"
 
 func main() {
 	app.RunServer()

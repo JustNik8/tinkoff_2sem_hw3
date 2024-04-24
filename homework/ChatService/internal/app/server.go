@@ -9,15 +9,16 @@ import (
 	"os/signal"
 	"syscall"
 
-	"2sem/hw1/homework/internal/config"
-	"2sem/hw1/homework/internal/repo"
-	"2sem/hw1/homework/internal/service"
-	"2sem/hw1/homework/internal/transport"
-	"github.com/golang-migrate/migrate"
 	_ "github.com/golang-migrate/migrate/database/postgres"
 	_ "github.com/golang-migrate/migrate/source/file"
 	"github.com/gorilla/websocket"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"hw3/chat-service/internal/config"
+	"hw3/chat-service/internal/converter"
+	"hw3/chat-service/internal/repo"
+	"hw3/chat-service/internal/service"
+	"hw3/chat-service/internal/transport/kafka"
+	"hw3/chat-service/internal/transport/rest"
 )
 
 const (
@@ -47,7 +48,15 @@ func RunServer() {
 	mux := http.NewServeMux()
 	chatRepo := repo.NewRepo(pool)
 	chatService := service.NewChatService(chatRepo)
-	chatHandler := transport.NewChatHandler(chatService, upgrader)
+	messageConverter := converter.MessageConverter{}
+
+	addrs := []string{"kafka1:9092"}
+	kafkaHandler, err := kafka.NewChatHandler(addrs)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	chatHandler := rest.NewChatHandler(chatService, upgrader, messageConverter, kafkaHandler)
 
 	mux.HandleFunc("/chat", chatHandler.Chat)
 
@@ -75,25 +84,7 @@ func connectToDB(connString string) *pgxpool.Pool {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	runMigrations(connString)
-
 	return pool
-}
-
-func runMigrations(connString string) {
-	log.Printf("Run migrations on %s\n", connString)
-	m, err := migrate.New("file://migrations", connString)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = m.Up()
-	if errors.Is(err, migrate.ErrNoChange) {
-		log.Println("Migrate no change")
-	} else if err != nil {
-		log.Fatal(err)
-	}
-	log.Println("Migrate ran successfully")
 }
 
 func runServer(ctx context.Context, mux *http.ServeMux, cfg *config.ServerConfig) {
