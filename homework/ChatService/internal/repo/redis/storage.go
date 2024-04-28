@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 	"hw3/chat-service/internal/config"
@@ -13,6 +15,12 @@ import (
 const (
 	messagesKey = "messages"
 )
+
+type redisMessage struct {
+	Nickname string    `json:"nickname"`
+	Message  string    `json:"message"`
+	Time     time.Time `json:"time"`
+}
 
 type StorageCache struct {
 	client *redis.Client
@@ -35,20 +43,31 @@ func NewStorageCache(cfg config.RedisConfig) *StorageCache {
 
 func (s *StorageCache) GetLastMessages(ctx context.Context, count int64) ([]domain.MessageInfo, error) {
 	cmd := s.client.LRange(ctx, messagesKey, 0, count-1)
-	resp := make([]domain.MessageInfo, count)
+	resp := make([]domain.MessageInfo, 0)
 
-	messages := cmd.Args()
-	for i, m := range messages {
-		strMsg := messages[i].(string)
+	messages, err := cmd.Result()
+	log.Println(messages, err)
+	if err != nil {
+		return nil, err
+	}
 
-		var message domain.MessageInfo
-		err := json.Unmarshal([]byte(strMsg), &message)
+	log.Println("MESSAGES", messages)
+	for i := range messages {
+
+		var message redisMessage
+		err := json.Unmarshal([]byte(messages[i]), &message)
 		if err != nil {
 			return nil, err
 		}
 
-		resp[i] = m.(domain.MessageInfo)
+		messageInfo := domain.MessageInfo{
+			Nickname: message.Nickname,
+			Message:  message.Message,
+			Time:     message.Time,
+		}
+		resp = append(resp, messageInfo)
 	}
 
+	log.Println(resp)
 	return resp, nil
 }

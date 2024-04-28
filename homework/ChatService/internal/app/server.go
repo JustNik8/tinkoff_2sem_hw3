@@ -51,8 +51,7 @@ func RunServer() {
 	chatService := service.NewChatService(storageCache)
 	messageConverter := converter.MessageConverter{}
 
-	addrs := []string{"kafka1:9092"}
-	kafkaHandler, err := kafka.NewChatHandler(addrs)
+	kafkaHandler, err := kafka.NewChatHandler(cfg.Kafka)
 	if err != nil {
 		log.Fatal(err)
 	}

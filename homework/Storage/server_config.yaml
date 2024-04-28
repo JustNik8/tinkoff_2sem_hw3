@@ -15,6 +15,6 @@ kafka:
 
 redis:
   host: redis
-  port: 6369
+  port: 6379
   password: redis
   db: 0

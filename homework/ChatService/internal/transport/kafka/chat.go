@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/IBM/sarama"
+	"hw3/chat-service/internal/config"
 	"hw3/chat-service/internal/transport/dto"
 )
 
@@ -12,8 +13,8 @@ type ChatHandler struct {
 	producer sarama.SyncProducer
 }
 
-func NewChatHandler(addrs []string) (*ChatHandler, error) {
-	producer, err := sarama.NewSyncProducer(addrs, nil)
+func NewChatHandler(cfg config.KafkaConfig) (*ChatHandler, error) {
+	producer, err := sarama.NewSyncProducer(cfg.Addrs, nil)
 	if err != nil {
 		return nil, err
 	}

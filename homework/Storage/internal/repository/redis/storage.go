@@ -18,7 +18,6 @@ const (
 )
 
 type redisMessage struct {
-	ID       string    `json:"id"`
 	Nickname string    `json:"nickname"`
 	Message  string    `json:"message"`
 	Time     time.Time `json:"time"`
@@ -45,7 +44,6 @@ func NewStorageCache(cfg config.RedisConfig) *StorageCache {
 
 func (s *StorageCache) PushMessage(ctx context.Context, message domain.MessageInfo) error {
 	cacheMessage := redisMessage{
-		ID:       message.ID,
 		Nickname: message.Nickname,
 		Message:  message.Message,
 		Time:     message.Time,

@@ -89,10 +89,10 @@ func writeMessages(c *websocket.Conn, reader *bufio.Reader, nickname string) {
 }
 
 func readMessages(c *websocket.Conn) {
-	//err := readLastMessages(c)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
+	err := readLastMessages(c)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	for {
 		messageType, messageBytes, err := c.ReadMessage()

@@ -52,7 +52,7 @@ func (h *ChatHandler) Chat(w http.ResponseWriter, r *http.Request) {
 	h.clients[connection] = struct{}{}
 	defer delete(h.clients, connection)
 
-	//h.sendLastMessages(connection, lastMessagesCnt)
+	h.sendLastMessages(connection, lastMessagesCnt)
 
 	for {
 		mt, message, err := connection.ReadMessage()

@@ -68,6 +68,8 @@ services:
       - redis_vol:/bitnami/redis/data
     environment:
       - REDIS_PASSWORD=redis
+    networks:
+      - service_network
 
   storage:
     build: ./Storage
