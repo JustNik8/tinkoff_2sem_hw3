@@ -52,14 +52,15 @@ func RunClient() {
 }
 
 func readNickname(reader *bufio.Reader) string {
-	var nickname string
 	fmt.Print("Enter your nickname: ")
 
-	_, err := fmt.Fscan(reader, &nickname)
+	nickname, err := reader.ReadString('\n')
 	if err != nil {
 		log.Fatal(err)
 
 	}
+
+	nickname = strings.TrimSpace(nickname)
 	if nickname == "" {
 		log.Fatal("You input empty nickname")
 	}
@@ -88,10 +89,10 @@ func writeMessages(c *websocket.Conn, reader *bufio.Reader, nickname string) {
 }
 
 func readMessages(c *websocket.Conn) {
-	err := readLastMessages(c)
-	if err != nil {
-		log.Fatal(err)
-	}
+	//err := readLastMessages(c)
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
 
 	for {
 		messageType, messageBytes, err := c.ReadMessage()

@@ -52,7 +52,7 @@ func (h *ChatHandler) Chat(w http.ResponseWriter, r *http.Request) {
 	h.clients[connection] = struct{}{}
 	defer delete(h.clients, connection)
 
-	h.sendLastMessages(connection, lastMessagesCnt)
+	//h.sendLastMessages(connection, lastMessagesCnt)
 
 	for {
 		mt, message, err := connection.ReadMessage()
@@ -115,6 +115,7 @@ func (h *ChatHandler) sendLastMessages(conn *websocket.Conn, count int64) {
 }
 
 func (h *ChatHandler) readMessage(message []byte) (dto.MessageInfoRequest, error) {
+	log.Println(message)
 	var info dto.MessageInfoRequest
 	err := json.Unmarshal(message, &info)
 
