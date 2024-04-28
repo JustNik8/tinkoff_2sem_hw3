@@ -22,7 +22,7 @@ jobs:
           go-version: 'stable'
 
       - name: Build
-        working-directory: ./homework/ChatService/ChatService
+        working-directory: ./homework/ChatService
         run: |
           go mod tidy
           go build -v ./...
