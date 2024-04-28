@@ -9,6 +9,7 @@ import (
 	"hw3/storage/internal/config"
 	"hw3/storage/internal/converter"
 	"hw3/storage/internal/repository"
+	"hw3/storage/internal/repository/redis"
 	"hw3/storage/internal/service"
 	"hw3/storage/internal/transport/kafka"
 )
@@ -28,7 +29,8 @@ func RunStorage() {
 	defer pool.Close()
 
 	storageRepo := repository.NewStorageRepo(pool)
-	storageService := service.NewStorageService(storageRepo)
+	cache := redis.NewStorageCache(cfg.Redis)
+	storageService := service.NewStorageService(storageRepo, cache)
 	messageConverter := converter.MessageConverter{}
 
 	storageHandler, err := kafka.NewStorageHandler(cfg.Kafka.Addrs, storageService, messageConverter)

@@ -59,6 +59,16 @@ services:
     depends_on:
       - zoo1
 
+  redis:
+    image: bitnami/redis:latest
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_vol:/bitnami/redis/data
+    environment:
+      - REDIS_PASSWORD=redis
+
   storage:
     build: ./Storage
     networks:
@@ -81,6 +91,7 @@ services:
 
 volumes:
   pg_vol:
+  redis_vol:
 
 networks:
   service_network:

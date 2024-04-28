@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"hw3/storage/internal/domain"
 	"hw3/storage/internal/repository"
+	"hw3/storage/internal/repository/redis"
 )
 
 type StorageService interface {
@@ -13,15 +14,29 @@ type StorageService interface {
 }
 
 type storageService struct {
-	repo repository.StorageRepo
+	repo  repository.StorageRepo
+	cache *redis.StorageCache
 }
 
-func NewStorageService(repo repository.StorageRepo) StorageService {
-	return &storageService{repo: repo}
+func NewStorageService(repo repository.StorageRepo, cache *redis.StorageCache) StorageService {
+	return &storageService{
+		repo:  repo,
+		cache: cache,
+	}
 }
 
 func (s *storageService) InsertMessage(ctx context.Context, message domain.MessageInfo) (domain.MessageInfo, error) {
 	message.ID = uuid.New().String()
 
-	return s.repo.InsertMessage(ctx, message)
+	message, err := s.repo.InsertMessage(ctx, message)
+	if err != nil {
+		return domain.MessageInfo{}, err
+	}
+
+	err = s.cache.PushMessage(ctx, message)
+	if err != nil {
+		return domain.MessageInfo{}, err
+	}
+
+	return message, nil
 }

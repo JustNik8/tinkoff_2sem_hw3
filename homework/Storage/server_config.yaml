@@ -12,3 +12,9 @@ kafka:
   addrs:
     - "kafka1:9092"
   topic: "chat"
+
+redis:
+  host: redis
+  port: 6369
+  password: redis
+  db: 0

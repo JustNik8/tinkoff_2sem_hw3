@@ -10,6 +10,7 @@ type ServerConfig struct {
 	Postgres PostgresConfig   `yaml:"postgres"`
 	Server   ServerInfoConfig `yaml:"server"`
 	Kafka    KafkaConfig      `yaml:"kafka"`
+	Redis    RedisConfig      `yaml:"redis"`
 }
 
 type PostgresConfig struct {
@@ -27,6 +28,13 @@ type ServerInfoConfig struct {
 type KafkaConfig struct {
 	Addrs []string `yaml:"addrs"`
 	Topic string   `yaml:"topic"`
+}
+
+type RedisConfig struct {
+	Host     string `yaml:"host"`
+	Port     int    `yaml:"port"`
+	Password string `yaml:"password"`
+	DB       int    `yaml:"db"`
 }
 
 func ParseServerConfig(path string) (*ServerConfig, error) {
