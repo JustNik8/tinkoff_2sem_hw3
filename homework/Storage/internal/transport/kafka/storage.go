@@ -43,31 +43,26 @@ func (s *StorageHandler) ConsumeMessages(topic string) error {
 
 	defer partConsumer.Close()
 
-	for {
-		select {
-		case msg, ok := <-partConsumer.Messages():
-			if !ok {
-				return fmt.Errorf("channel closed")
-			}
+	for msg := range partConsumer.Messages() {
+		var messageDTO dto.MessageInfoRequest
+		err := json.Unmarshal(msg.Value, &messageDTO)
 
-			var messageDTO dto.MessageInfoRequest
-			err := json.Unmarshal(msg.Value, &messageDTO)
-
-			if err != nil {
-				log.Printf("Error unmarshaling JSON: %v\n", err)
-				continue
-			}
-
-			message := s.messageConverter.MapDtoToDomain(messageDTO)
-			log.Printf("Received message: %+v\n", messageDTO)
-
-			ctx := context.Background()
-			savedMessage, err := s.storageService.InsertMessage(ctx, message)
-			if err != nil {
-				log.Println(err)
-				continue
-			}
-			log.Println(savedMessage)
+		if err != nil {
+			log.Printf("Error unmarshaling JSON: %v\n", err)
+			continue
 		}
+
+		message := s.messageConverter.MapDtoToDomain(messageDTO)
+		log.Printf("Received message: %+v\n", messageDTO)
+
+		ctx := context.Background()
+		savedMessage, err := s.storageService.InsertMessage(ctx, message)
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+		log.Println(savedMessage)
 	}
+
+	return nil
 }

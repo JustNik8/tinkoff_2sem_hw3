@@ -51,7 +51,6 @@ func (s *StorageCache) GetLastMessages(ctx context.Context, count int64) ([]doma
 		return nil, err
 	}
 
-	log.Println("MESSAGES", messages)
 	for i := range messages {
 
 		var message redisMessage
