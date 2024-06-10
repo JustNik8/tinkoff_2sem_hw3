@@ -1,0 +1,20 @@
+postgres:
+  user: "user"
+  password: "user"
+  host: "postgres"
+  port: 5432
+  database: "chat_db"
+
+server:
+  port: 8080
+
+kafka:
+  addrs:
+    - "kafka1:9092"
+  topic: "chat"
+
+redis:
+  host: redis
+  port: 6379
+  password: redis
+  db: 0
